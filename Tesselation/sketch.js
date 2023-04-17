@@ -6,6 +6,7 @@ let tesselation;
 // let lines = [];
 let buttons = [];
 let edgeButtons = [];
+let sliders = [];
 let vertices = [];
 // let end;
 let pointSelected = null;
@@ -55,13 +56,15 @@ function setup() {
   buttons.push(new Button(width - 130, 30, 40, color(255, 160, 160), "delete", false));
   buttons.push(new Button(width - 180, 30, 40, color(160, 255, 160), "print", false));
   buttons.push(new Button(width - 230, 30, 40, color(160, 160, 255), "full", false));
-  buttons.push(new Button(width - 30, 30, 40, color(255, 160, 255), "scale", true));
+  // buttons.push(new Button(width - 30, 30, 40, color(255, 160, 255), "scale", true));
 
 
   edgeButtons.push(new edgeButton(width - 120, 80, width - 40, 80, 0));
   edgeButtons.push(new edgeButton(width - 40, 160, width - 120, 160, 0));
   edgeButtons.push(new edgeButton(width - 40, 80, width - 40, 160, 1));
   edgeButtons.push(new edgeButton(width - 120, 160, width - 120, 80, 1));
+
+  buttons.push(new Button(width - 30, 30, width - 100, 30, 0.5, 1.5, 1, color(255, 160, 255), "scale", true));
 
   // buttons.push(new Button(width - 280, 30, 40, color(160, 160, 255), "save"));
 
@@ -269,14 +272,15 @@ function mousePressed() {
         }
         if (button.label == "scale") {
           let nextPrintScale = 0;
-          if (printScale == 0.2) nextPrintScale = 0.25;
-          if (printScale == 0.25) nextPrintScale = 0.3;
-          if (printScale == 0.3) nextPrintScale = 0.35;
-          if (printScale == 0.35) nextPrintScale = 0.4;
-          if (printScale == 0.4) nextPrintScale = 0.5;
-          if (printScale == 0.5) nextPrintScale = 0.75;
-          if (printScale == 0.75) nextPrintScale = 1;
-          if (printScale == 1) nextPrintScale = 0.2;
+          if (printScale == 0.5) nextPrintScale = 0.6;
+          if (printScale == 0.6) nextPrintScale = 0.7;
+          if (printScale == 0.7) nextPrintScale = 0.8;
+          if (printScale == 0.8) nextPrintScale = 0.9;
+          if (printScale == 0.9) nextPrintScale = 1;
+          if (printScale == 1) nextPrintScale = 1.1;
+          if (printScale == 1.1) nextPrintScale = 1.2;
+          if (printScale == 1.2) nextPrintScale = 1.3;
+          if (printScale == 1.3) nextPrintScale = 0.5;
           printScale = nextPrintScale;
           return false;
         }
@@ -548,5 +552,29 @@ class edgeButton {
     point(this.p1);
     point(this.p2);
     pop();
+  }
+}
+
+class Slider {
+  constructor(x1, y1, x2, y2, minVal, maxVal, defaultValue, col, label, displayOnPrintScreen) {
+    this.p1 = createVector(x1, y1);
+    this.p2 = createVector(x2, y2);
+    this.range = [minVal, maxVal];
+    this.defaultValue = defaultValue;
+    this.value = defaultValue;
+    this.col = col;
+    this.label = label;
+    this.displayOnPrintScreen = displayOnPrintScreen;
+  }
+
+  display() {
+    stroke(64);
+    strokeWeight(3);
+    line(this.p1.x, this.p1.y, this.p2.x, this.p2.y);
+    stroke(32);
+    point(p5.Vector.lerp(this.p1, this.p2, map(this.defaultValue, range[0], range[1], 0, 1)));
+    stroke(this.col);
+    strokeWeight(10);
+    point(p5.Vector.lerp(this.p1, this.p2, map(this.value, range[0], range[1], 0, 1)));
   }
 }
