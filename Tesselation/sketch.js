@@ -57,6 +57,7 @@ function setup() {
   buttons.push(new Button(width - 180, 30, 40, color(160, 255, 160), "print", false));
   buttons.push(new Button(width - 230, 30, 40, color(160, 160, 255), "full", false));
   buttons.push(new Button(30, 30, 40, color(255, 160, 160), "back", true));
+  buttons.push(new Button(width - 230, 30, 40, color(160, 255, 160), "save", true));
 
 
   edgeButtons.push(new edgeButton(width - 120, 80, width - 40, 80, 0));
@@ -64,9 +65,9 @@ function setup() {
   edgeButtons.push(new edgeButton(width - 40, 80, width - 40, 160, 1));
   edgeButtons.push(new edgeButton(width - 120, 160, width - 120, 80, 1));
 
-  sliders.push(new Slider(width - 150, 30, width - 30, 30, 0.5, 1.5, 1, color(255, 80, 80), "scale", true ));
+  sliders.push(new Slider(width - 180, 30, width - 30, 30, 0.5, 1.5, 1, color(255, 80, 80), "scale", true ));
 
-  // buttons.push(new Button(width - 280, 30, 40, color(160, 160, 255), "save"));
+  
 
   // vertices.push(createVector(150, 150));
   // vertices.push(createVector(dim - 150, 150));
@@ -584,6 +585,9 @@ class Slider {
     stroke(this.col);
     strokeWeight(5);
     point(p5.Vector.lerp(this.p1, this.p2, map(this.value, this.range[0], this.range[1], 0, 1)));
+    noStroke();
+    fill(64);
+    text(`${this.label}: ${round(this.value, 2)}`, this.p1.x, this.p1.y + 20);
     pop();
   }
 }
