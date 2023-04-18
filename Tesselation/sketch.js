@@ -56,7 +56,7 @@ function setup() {
   buttons.push(new Button(width - 130, 30, 40, color(255, 160, 160), "delete", false));
   buttons.push(new Button(width - 180, 30, 40, color(160, 255, 160), "print", false));
   buttons.push(new Button(width - 230, 30, 40, color(160, 160, 255), "full", false));
-  // buttons.push(new Button(width - 30, 30, 40, color(255, 160, 255), "scale", true));
+  buttons.push(new Button(30, 30, 40, color(255, 160, 160), "back", true));
 
 
   edgeButtons.push(new edgeButton(width - 120, 80, width - 40, 80, 0));
@@ -64,7 +64,7 @@ function setup() {
   edgeButtons.push(new edgeButton(width - 40, 80, width - 40, 160, 1));
   edgeButtons.push(new edgeButton(width - 120, 160, width - 120, 80, 1));
 
-  buttons.push(new Button(width - 30, 30, width - 100, 30, 0.5, 1.5, 1, color(255, 160, 255), "scale", true));
+  sliders.push(new Slider(width - 150, 30, width - 30, 30, 0.5, 1.5, 1, color(255, 80, 80), "scale", true ));
 
   // buttons.push(new Button(width - 280, 30, 40, color(160, 160, 255), "save"));
 
@@ -112,6 +112,11 @@ function draw() {
   for (let button of buttons) {
     if (runPrint == button.displayOnPrintScreen) button.display();
   }
+  for (let slider of sliders) {
+    if (runPrint == slider.displayOnPrintScreen) slider.display();
+  }
+
+  printScale = sliders[0].value;
 
   if (!runPrint) {
     push();
@@ -270,18 +275,8 @@ function mousePressed() {
         if (button.label == "save") {
           return false;
         }
-        if (button.label == "scale") {
-          let nextPrintScale = 0;
-          if (printScale == 0.5) nextPrintScale = 0.6;
-          if (printScale == 0.6) nextPrintScale = 0.7;
-          if (printScale == 0.7) nextPrintScale = 0.8;
-          if (printScale == 0.8) nextPrintScale = 0.9;
-          if (printScale == 0.9) nextPrintScale = 1;
-          if (printScale == 1) nextPrintScale = 1.1;
-          if (printScale == 1.1) nextPrintScale = 1.2;
-          if (printScale == 1.2) nextPrintScale = 1.3;
-          if (printScale == 1.3) nextPrintScale = 0.5;
-          printScale = nextPrintScale;
+        if (button.label == "back") {
+          runPrint = false;
           return false;
         }
       }
@@ -339,6 +334,15 @@ function mouseReleased() {
 }
 
 function mouseDragged() {
+  // if (buttonSelected) {
+    for (let slider of sliders) {
+      let m = map(mouseX, slider.p1.x, slider.p2.x, slider.range[0], slider.range[1]);
+      let d = (slider.range[1] - slider.range[0]);
+      if (abs(slider.defaultValue - m) < d * 0.05) slider.value = slider.defaultValue;
+      else slider.value = constrain(m, slider.range[0], slider.range[1]);
+    }
+  // }
+
   if (!runPrint && !buttonSelected) {
     if (pointSelected != null && lineSelected != null) {
       for (let v of vertices) {
@@ -498,14 +502,12 @@ class Button {
       line(-0.25, 0.25, -0.25, 0.15);
       line(0.25, -0.25, 0.25, -0.15);
       line(0.25, 0.25, 0.25, 0.15);
-    } else if (this.label == "scale") {
-      textAlign(CENTER);
-      textSize(0.5);
-      textFont(myFont)
-      fill(255);
-      stroke(0)
-      strokeWeight(0.1)
-      text(printScale, 0, 0.2);
+    } else if (this.label == "back") {
+      stroke(0);
+      strokeWeight(3 / s);
+      line(-0.25, 0, 0.25, 0);
+      line(-0.25, 0, 0, -0.25);
+      line(-0.25, 0, 0, 0.25);
     }
     pop();
   }
@@ -568,13 +570,20 @@ class Slider {
   }
 
   display() {
+    push();
+    stroke(128);
+    strokeWeight(5);
+    line(this.p1.x, this.p1.y, this.p2.x, this.p2.y);
     stroke(64);
     strokeWeight(3);
-    line(this.p1.x, this.p1.y, this.p2.x, this.p2.y);
-    stroke(32);
-    point(p5.Vector.lerp(this.p1, this.p2, map(this.defaultValue, range[0], range[1], 0, 1)));
+    point(p5.Vector.lerp(this.p1, this.p2, map(this.defaultValue, this.range[0], this.range[1], 0, 1)));
+    // point(p5.Vector.lerp(this.p1, this.p2, 0.5));
+    stroke(red(this.col), green(this.col), blue(this.col), 100);
+    strokeWeight(20);
+    point(p5.Vector.lerp(this.p1, this.p2, map(this.value, this.range[0], this.range[1], 0, 1)));
     stroke(this.col);
-    strokeWeight(10);
-    point(p5.Vector.lerp(this.p1, this.p2, map(this.value, range[0], range[1], 0, 1)));
+    strokeWeight(5);
+    point(p5.Vector.lerp(this.p1, this.p2, map(this.value, this.range[0], this.range[1], 0, 1)));
+    pop();
   }
 }
