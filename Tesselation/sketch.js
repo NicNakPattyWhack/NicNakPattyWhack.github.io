@@ -3,30 +3,29 @@
 // p5.disableFriendlyErrors = true;
 
 let tesselation;
-// let lines = [];
 let buttons = [];
 let edgeButtons = [];
 let sliders = [];
 let vertices = [];
-// let end;
+let itemSelectedType = null;
 let pointSelected = null;
 let lineSelected = null;
-let buttonSelected = false;
+let buttonSelected = null;
 let currentSide = 0;
 let runPrint = false;
 let midPoint;
 let printScale = 1;
-// adwdq
 let myFont;
 
 function preload() {
-  myFont = loadFont("Oswald-VariableFont_wght.ttf")
+  myFont = loadFont("Oswald-VariableFont_wght.ttf");
 }
 
 function setup() {
   // createCanvas(displayWidth, displayHeight);
   // createCanvas(displayHeight, displayWidth);
-  createCanvas(windowWidth, windowHeight);
+  if (windowWidth > windowHeight) createCanvas(windowWidth, windowHeight);
+  else if (windowWidth < windowHeight) createCanvas(windowHeight, windowWidth);
   // frameRate(30)
 
   dim = min(width, height);
@@ -65,9 +64,10 @@ function setup() {
   edgeButtons.push(new edgeButton(width - 40, 80, width - 40, 160, 1));
   edgeButtons.push(new edgeButton(width - 120, 160, width - 120, 80, 1));
 
-  sliders.push(new Slider(width - 180, 30, width - 30, 30, 0.5, 1.5, 1, color(255, 80, 80), "scale", true ));
+  sliders.push(new Slider(width - 150, 30, width - 40, 30, 0.5, 1.5, 0.1, 1, color(255, 80, 80), "scale", true));
+  sliders.push(new Slider(width - 150, 60, width - 40, 60, 0, 3, 1, 1, color(80, 80, 255), "rotate", true));
 
-  
+
 
   // vertices.push(createVector(150, 150));
   // vertices.push(createVector(dim - 150, 150));
@@ -242,67 +242,98 @@ function drawEverything() {
 }
 
 function mousePressed() {
-  // function mouseReleased() {
+  itemSelectedType = null;
   lineSelected = null;
   pointSelected = null;
-  buttonSelected = false;
+  buttonSelected = null;
+
+  for (let button of buttons) {
+    console.log("CLICK!", button, button.hover());
+    if (button.hover()) {
+      itemSelectedType = "button";
+      console.log("CLICK!");
+
+      // if (button.displayOnPrintScreen == runPrint) {
+      if (button.label == "line" || button.label == "curve") {
+        addLine(button.label);
+        lineType = button.label;
+        return;
+      } else if (button.label == "print") {
+        runPrint = true;
+        return;
+      } else if (button.label == "delete") {
+        for (let i = tesselation[currentSide].lines.length - 1; i >= 0; i--) {
+          if (tesselation[currentSide].lines[i].side == currentSide) {
+            tesselation[currentSide].lines.splice(i, 1);
+            break;
+          }
+        }
+        return;
+      } else if (button.label == "full") {
+        fullscreen(true);
+        return;
+      }
+    } else {
+      if (button.label == "save") {
+        return;
+      }
+      if (button.label == "back") {
+        runPrint = false;
+        return;
+      }
+    }
+
+    return;
+    // }
+  }
+
+  console.log(itemSelectedType);
+
+  for (let slider of sliders) {
+    if (slider.hover()) {
+      itemSelectedType = "slider";
+      return;
+    }
+  }
+
+  for (let edgeButton of edgeButtons) {
+    if (edgeButton.hover()) {
+      edgeButton.selected = true;
+      currentSide = edgeButton.index;
+    } else {
+      edgeButton.selected = false;
+    }
+  }
 
   // console.log(mouseX, mouseY, pmouseX, pmouseY);
   for (let button of buttons) {
     let d = dist(mouseX, mouseY, button.pos.x, button.pos.y);
     if (d < button.size / 2) {
       if (!runPrint) {
-        if (button.label == "line" || button.label == "curve") {
-          addLine(button.label);
-          lineType = button.label;
-          return false;
-        } else if (button.label == "print") {
-          runPrint = true;
-          buttonSelected = true;
-          return false;
-        } else if (button.label == "delete") {
-          for (let i = tesselation[currentSide].lines.length - 1; i >= 0; i--) {
-            if (tesselation[currentSide].lines[i].side == currentSide) {
-              tesselation[currentSide].lines.splice(i, 1);
-              break;
-            }
-          }
-          return false;
-        } else if (button.label == "full") {
-          fullscreen(true);
-          return false;
-        }
-      } else {
-        if (button.label == "save") {
-          return false;
-        }
-        if (button.label == "back") {
-          runPrint = false;
-          return false;
-        }
+
       }
     }
+  }
 
-    for (let edgeButton of edgeButtons) {
-      if (edgeButton.hover()) {
-        edgeButton.selected = true;
-        currentSide = edgeButton.index;
-      } else {
-        edgeButton.selected = false;
-      }
+  for (let edgeButton of edgeButtons) {
+    if (edgeButton.hover()) {
+      edgeButton.selected = true;
+      currentSide = edgeButton.index;
+    } else {
+      edgeButton.selected = false;
     }
+  }
 
-    for (let t of tesselation) {
-      let lines = t.lines;
-      for (let i in lines) {
-        for (let j in lines[i].points) {
-          for (let n of [0, dim - 300]) {
-            let p = lines[i].points[j];
-            let d = currentSide == 0 ? dist(mouseX, mouseY - n, p.x, p.y) : dist(mouseX - n, mouseY, p.x, p.y);
-            if (d < 20) {
-              lineSelected = i;
-              pointSelected = j;
-            }
+  for (let t of tesselation) {
+    let lines = t.lines;
+    for (let i in lines) {
+      for (let j in lines[i].points) {
+        for (let n of [0, dim - 300]) {
+          let p = lines[i].points[j];
+          let d = currentSide == 0 ? dist(mouseX, mouseY - n, p.x, p.y) : dist(mouseX - n, mouseY, p.x, p.y);
+          if (d < 20) {
+            lineSelected = i;
+            pointSelected = j;
           }
         }
       }
@@ -329,22 +360,23 @@ function mouseReleased() {
     }
   }
 
+  itemSelectedType = null;
   lineSelected = null;
   pointSelected = null;
-  buttonSelected = false;
+  buttonSelected = null;
 }
 
 function mouseDragged() {
-  // if (buttonSelected) {
+  if (itemSelectedType == "slider") {
     for (let slider of sliders) {
       let m = map(mouseX, slider.p1.x, slider.p2.x, slider.range[0], slider.range[1]);
       let d = (slider.range[1] - slider.range[0]);
       if (abs(slider.defaultValue - m) < d * 0.05) slider.value = slider.defaultValue;
-      else slider.value = constrain(m, slider.range[0], slider.range[1]);
+      else slider.value = floor(constrain(m, slider.range[0], slider.range[1]) / slider.step) * slider.step;
     }
-  // }
+  }
 
-  if (!runPrint && !buttonSelected) {
+  if (!runPrint && itemSelectedType == "line") {
     if (pointSelected != null && lineSelected != null) {
       for (let v of vertices) {
         for (let n of [0, dim - 300]) {
@@ -432,6 +464,11 @@ class Button {
     this.col = col;
     this.label = label;
     this.displayOnPrintScreen = displayOnPrintScreen;
+  }
+
+  hover() {
+    if (dist(mouseX, mouseY, this.pos.x, this.pos.y) < this.side / 2) return true;
+    return false;
   }
 
   display() {
@@ -559,15 +596,21 @@ class edgeButton {
 }
 
 class Slider {
-  constructor(x1, y1, x2, y2, minVal, maxVal, defaultValue, col, label, displayOnPrintScreen) {
+  constructor(x1, y1, x2, y2, minVal, maxVal, step, defaultValue, col, label, displayOnPrintScreen) {
     this.p1 = createVector(x1, y1);
     this.p2 = createVector(x2, y2);
     this.range = [minVal, maxVal];
     this.defaultValue = defaultValue;
+    this.step = step;
     this.value = defaultValue;
     this.col = col;
     this.label = label;
     this.displayOnPrintScreen = displayOnPrintScreen;
+  }
+
+  hover() {
+    if (inBox(mouseX, mouseY, this.p1.x - 5, this.p1.y - 5, this.p2.x + 5, this.p2.y + 5)) return true;
+    return false;
   }
 
   display() {
@@ -580,14 +623,25 @@ class Slider {
     point(p5.Vector.lerp(this.p1, this.p2, map(this.defaultValue, this.range[0], this.range[1], 0, 1)));
     // point(p5.Vector.lerp(this.p1, this.p2, 0.5));
     stroke(red(this.col), green(this.col), blue(this.col), 100);
-    strokeWeight(20);
+    strokeWeight(15);
     point(p5.Vector.lerp(this.p1, this.p2, map(this.value, this.range[0], this.range[1], 0, 1)));
     stroke(this.col);
     strokeWeight(5);
     point(p5.Vector.lerp(this.p1, this.p2, map(this.value, this.range[0], this.range[1], 0, 1)));
-    noStroke();
+    // noStroke();
+    stroke(64);
+    strokeWeight(1);
+    strokeJoin(ROUND);
     fill(64);
-    text(`${this.label}: ${round(this.value, 2)}`, this.p1.x, this.p1.y + 20);
+    let label = "";
+    if (this.label == "scale") label = "SCALE";
+    if (this.label == "rotate") label = "RTOATE";
+    textFont(myFont);
+    textSize(16);
+    textAlign(LEFT);
+    text(`${this.value}`, this.p2.x + 10, this.p2.y + 6);
+    textAlign(RIGHT);
+    text(`${label}`, this.p1.x - 10, this.p1.y + 6);
     pop();
   }
 }
