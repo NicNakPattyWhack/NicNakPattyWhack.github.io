@@ -11,6 +11,7 @@ let itemSelectedType = null;
 let pointSelected = null;
 let lineSelected = null;
 let buttonSelected = null;
+let sliderSelected = null;
 let currentSide = 0;
 let runPrint = false;
 let midPoint;
@@ -140,7 +141,7 @@ function draw() {
       push();
       translate(x[i], y[i]);
       scale(printScale * 0.5);
-      rotate((PI / 2) * i);
+      rotate((PI / 2) * (i + sliders[1].value));
 
       translate(-midPoint.x, -midPoint.y);
 
@@ -248,12 +249,10 @@ function mousePressed() {
   buttonSelected = null;
 
   for (let button of buttons) {
-    console.log("CLICK!", button, button.hover());
-    if (button.hover()) {
+    if (button.hover() && button.displayOnPrintScreen == runPrint) {
       itemSelectedType = "button";
-      console.log("CLICK!");
+      console.log(button.label);
 
-      // if (button.displayOnPrintScreen == runPrint) {
       if (button.label == "line" || button.label == "curve") {
         addLine(button.label);
         lineType = button.label;
@@ -272,26 +271,24 @@ function mousePressed() {
       } else if (button.label == "full") {
         fullscreen(true);
         return;
-      }
-    } else {
-      if (button.label == "save") {
+      } else if (button.label == "save") {
         return;
-      }
-      if (button.label == "back") {
+      } else if (button.label == "back") {
         runPrint = false;
         return;
       }
+      return;
     }
-
-    return;
-    // }
   }
 
   console.log(itemSelectedType);
 
-  for (let slider of sliders) {
-    if (slider.hover()) {
+  for (let i in sliders) {
+    if (sliders[i].hover()) {
       itemSelectedType = "slider";
+
+      sliderSelected = i;
+
       return;
     }
   }
@@ -328,14 +325,18 @@ function mousePressed() {
     let lines = t.lines;
     for (let i in lines) {
       for (let j in lines[i].points) {
-        for (let n of [0, dim - 300]) {
-          let p = lines[i].points[j];
-          let d = currentSide == 0 ? dist(mouseX, mouseY - n, p.x, p.y) : dist(mouseX - n, mouseY, p.x, p.y);
-          if (d < 20) {
-            lineSelected = i;
-            pointSelected = j;
-          }
+        // for (let n of [0, dim - 300]) {
+        let p = lines[i].points[j];
+        // let d = currentSide == 0 ? dist(mouseX, mouseY - n, p.x, p.y) : dist(mouseX - n, mouseY, p.x, p.y);
+        if (lines[i].hover(j)) {
+          itemSelectedType = "line";
+
+          lineSelected = i;
+          pointSelected = j;
+
+          return;
         }
+        // }
       }
     }
   }
@@ -368,42 +369,46 @@ function mouseReleased() {
 
 function mouseDragged() {
   if (itemSelectedType == "slider") {
-    for (let slider of sliders) {
-      let m = map(mouseX, slider.p1.x, slider.p2.x, slider.range[0], slider.range[1]);
-      let d = (slider.range[1] - slider.range[0]);
-      if (abs(slider.defaultValue - m) < d * 0.05) slider.value = slider.defaultValue;
-      else slider.value = floor(constrain(m, slider.range[0], slider.range[1]) / slider.step) * slider.step;
-    }
+    // for (let slider of sliders) {
+    let slider = sliders[sliderSelected];
+    let m = map(mouseX, slider.p1.x, slider.p2.x, slider.range[0], slider.range[1]);
+    let d = (slider.range[1] - slider.range[0]);
+    if (abs(slider.defaultValue - m) < d * 0.05) slider.value = slider.defaultValue;
+    else slider.value = floor(constrain(m, slider.range[0], slider.range[1]) / slider.step) * slider.step;
+    // }
   }
 
   if (!runPrint && itemSelectedType == "line") {
     if (pointSelected != null && lineSelected != null) {
-      for (let v of vertices) {
-        for (let n of [0, dim - 300]) {
-          // console.log(n)
-          // for (let N = 0; N <= 1; N++) {
-          //   let n = [0, dim - 300][N];
-          let d = dist(v.x, v.y, mouseX, mouseY);
-          if (d < 10) {
-            tesselation[currentSide].lines[lineSelected].points[pointSelected].set(v.x, v.y);
-            // tesselation[currentSide].lines[lineSelected].points[pointSelected].set(mouseX, mouseY - n);
-            return false;
+      console.log(tesselation[currentSide].lines[lineSelected].side == currentSide)
+      if (tesselation[currentSide].lines[lineSelected].side == currentSide) {
+        for (let v of vertices) {
+          for (let n of [0, dim - 300]) {
+            // console.log(n)
+            // for (let N = 0; N <= 1; N++) {
+            //   let n = [0, dim - 300][N];
+            let d = dist(v.x, v.y, mouseX, mouseY);
+            if (d < 10) {
+              tesselation[currentSide].lines[lineSelected].points[pointSelected].set(v.x, v.y);
+              // tesselation[currentSide].lines[lineSelected].points[pointSelected].set(mouseX, mouseY - n);
+              return false;
+            }
           }
         }
-      }
 
-      // if (tesselation[currentSide].lines.length > 0) {
-      let v = tesselation[currentSide].lines[lineSelected].points[pointSelected];
-      // }
-      for (let n of [0, dim - 300]) {
-        let d = currentSide == 0 ? dist(v.x, v.y, mouseX, mouseY - n) : dist(v.x, v.y, mouseX - n, mouseY);
-        if (currentSide == 0) {
-          tesselation[currentSide].lines[lineSelected].points[pointSelected].set(mouseX, mouseY - n);
-        } else if (currentSide == 1) {
-          tesselation[currentSide].lines[lineSelected].points[pointSelected].set(mouseX - n, mouseY);
+        // if (tesselation[currentSide].lines.length > 0) {
+        let v = tesselation[currentSide].lines[lineSelected].points[pointSelected];
+        // }
+        for (let n of [0, dim - 300]) {
+          let d = currentSide == 0 ? dist(v.x, v.y, mouseX, mouseY - n) : dist(v.x, v.y, mouseX - n, mouseY);
+          if (currentSide == 0) {
+            tesselation[currentSide].lines[lineSelected].points[pointSelected].set(mouseX, mouseY - n);
+          } else if (currentSide == 1) {
+            tesselation[currentSide].lines[lineSelected].points[pointSelected].set(mouseX - n, mouseY);
+          }
+
+          return false;
         }
-
-        return false;
       }
     }
   }
@@ -454,6 +459,14 @@ class Line {
       this.points.push(createVector(x3, y3));
     }
   }
+
+  hover(i) {
+    let p = this.points[i];
+    if (dist(mouseX, mouseY, p.x, p.y) < 10) {
+      return true;
+    }
+    return false;
+  }
 }
 
 class Button {
@@ -467,7 +480,7 @@ class Button {
   }
 
   hover() {
-    if (dist(mouseX, mouseY, this.pos.x, this.pos.y) < this.side / 2) return true;
+    if (dist(mouseX, mouseY, this.pos.x, this.pos.y) < this.size / 2) return true;
     return false;
   }
 
@@ -563,7 +576,6 @@ class edgeButton {
   hover() {
     let d = this.p1.dist(this.p2);
     let angle = atan2(this.p2.x - this.p1.x, this.p2.y - this.p1.y);
-    // let angle = PI / 3;
     let x = mouseX - this.p1.x;
     let y = mouseY - this.p1.y;
     if (inBox(x * cos(angle) - y * sin(angle), x * sin(angle) + y * cos(angle), -5, 5, 5, d - 5)) {
@@ -639,7 +651,7 @@ class Slider {
     textFont(myFont);
     textSize(16);
     textAlign(LEFT);
-    text(`${this.value}`, this.p2.x + 10, this.p2.y + 6);
+    text(`${round(this.value, 1)}`, this.p2.x + 10, this.p2.y + 6);
     textAlign(RIGHT);
     text(`${label}`, this.p1.x - 10, this.p1.y + 6);
     pop();
