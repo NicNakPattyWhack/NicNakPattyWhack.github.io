@@ -12,6 +12,7 @@ let pointSelected = null;
 let lineSelected = null;
 let buttonSelected = null;
 let sliderSelected = null;
+let mouseOffset;
 let currentSide = 0;
 let runPrint = false;
 let midPoint;
@@ -68,8 +69,6 @@ function setup() {
   sliders.push(new Slider(width - 150, 30, width - 40, 30, 0.5, 1.5, 0.1, 1, color(255, 80, 80), "scale", true));
   sliders.push(new Slider(width - 150, 60, width - 40, 60, 0, 3, 1, 1, color(80, 80, 255), "rotate", true));
 
-
-
   // vertices.push(createVector(150, 150));
   // vertices.push(createVector(dim - 150, 150));
   // vertices.push(createVector(150, dim - 150));
@@ -101,6 +100,8 @@ function setup() {
     midPoint.add(v);
   }
   midPoint.div(4);
+
+  mouseOffset = createVector();
 }
 
 function keyPressed() {
@@ -197,10 +198,8 @@ function drawEverything() {
 
             if (lines[i].type == "curve") {
               push();
-              stroke(0, 32);
+              stroke(100, 32);
               strokeWeight(3);
-              // point(lines[i].points[j]);
-
               line(x0, y0, x1, y1);
               line(x2, y2, x3, y3);
               pop();
@@ -342,23 +341,34 @@ function mousePressed() {
     for (let l of t.lines) {
       for (let j in l.points) {
         let p = l.points[j];
-        // for (let n of [0, dim - 300]) {
-        // let d = currentSide == 0 ? dist(mouseX, mouseY - n, p.x, p.y) : dist(mouseX - n, mouseY, p.x, p.y);
-        let d = dist(p.x, p.y, mouseX, mouseY);
-        if (d < nearestDist && d < 20) {
-          itemSelectedType = "line";
+        for (let offset of [0, dim - 300]) {
+          let d;
+          if (currentSide == 0) {
+            d = dist(p.x, p.y, mouseX, mouseY - offset);
+            mouseOffset.set(0, -offset);
+          } else if (currentSide == 1) {
+            d = dist(p.x, p.y, mouseX - offset, mouseY);
+            mouseOffset.set(-offset, 0);
+          }
+          console.log(offset)
 
-          nearestLine = l;
-          nearestPoint = p;
-          nearestDist = d;
+          // let d = currentSide == 0 ? dist(mouseX, mouseY - offset, p.x, p.y) : dist(mouseX - n, mouseY, p.x, p.y);
+          // let d = dist(p.x, p.y, mouseX, mouseY);
+          if (d < nearestDist && d < 20) {
+            itemSelectedType = "line";
+            nearestLine = l;
+            nearestPoint = p;
+            nearestDist = d;
+
+            break;
+          }
         }
-        // }
       }
     }
   }
   lineSelected = nearestLine;
   pointSelected = nearestPoint;
-  console.log(nearestLine, nearestDist)
+  console.log(itemSelectedType, nearestLine, nearestDist);
 }
 
 function mouseReleased() {
@@ -366,6 +376,7 @@ function mouseReleased() {
   lineSelected = null;
   pointSelected = null;
   buttonSelected = null;
+  mouseOffset.set(0, 0)
 
   if (!runPrint) {
     for (let i in vertices) {
@@ -382,6 +393,7 @@ function mouseReleased() {
 }
 
 function mouseDragged() {
+  console.log(mouseOffset.x, mouseOffset.y)
   if (itemSelectedType == "slider") {
     // for (let slider of sliders) {
     let slider = sliders[sliderSelected];
@@ -395,20 +407,19 @@ function mouseDragged() {
   if (!runPrint && itemSelectedType == "line") {
     if (pointSelected != null && lineSelected != null && lineSelected.side == currentSide) {
       console.log(lineSelected.side == currentSide);
+      pointSelected.set(mouseX + mouseOffset.x, mouseY + mouseOffset.y);
       for (let v of vertices) {
-        for (let n of [0, dim - 300]) {
+        // for (let n of [0, dim - 300]) {
           // console.log(n)
-          // for (let N = 0; N <= 1; N++) {
-          //   let n = [0, dim - 300][N];
-          let d = dist(v.x, v.y, mouseX, mouseY);
+          // for (let ofset of [0, dim - 300]) {
+          let d = dist(v.x, v.y, mouseX + mouseOffset.x, mouseY + mouseOffset.y);
           if (d < 10) {
-            pointSelected.set(v.x, v.y);
+            pointSelected.set(v.x , v.y);
             // tesselation[currentSide].lines[lineSelected].points[pointSelected].set(mouseX, mouseY - n);
             return false;
           }
-        }
-
-        pointSelected.set(mouseX, mouseY);
+          // }
+        // }
       }
     }
   }
@@ -460,9 +471,9 @@ class Line {
     }
   }
 
-  hover(i) {
+  hover(x, y, i) {
     let p = this.points[i];
-    if (dist(mouseX, mouseY, p.x, p.y) < 10) {
+    if (dist(x, y, p.x, p.y) < 10) {
       return true;
     }
     return false;
@@ -506,18 +517,18 @@ class Button {
       stroke(64);
       strokeWeight(2);
       line(0.2, -0.25, -0.2, 0.25);
-      strokeWeight(5 / s);
-      point(0.2, -0.25);
-      point(-0.2, 0.25);
+      strokeWeight(5);
+      circle(0.2, -0.25, 0);
+      circle(-0.2, 0.25, 0);
     } else if (this.label == "curve") {
       stroke(64);
       strokeWeight(2);
       bezier(0.2, -0.25, -0.25, -0.1, 0.25, 0.2, -0.2, 0.25);
       strokeWeight(5);
-      point(0.2, -0.25);
-      point(-0.25, -0.1);
-      point(0.25, 0.2);
-      point(-0.2, 0.25);
+      circle(0.2, -0.25, 0);
+      circle(-0.25, -0.1, 0);
+      circle(0.25, 0.2, 0);
+      circle(-0.2, 0.25, 0);
     } else if (this.label == "print") {
       stroke(0);
       strokeWeight(3);
@@ -528,23 +539,23 @@ class Button {
       line(0.25, 0.2, 0.15, 0.2);
       line(-0.25, -0.1, 0.25, -0.1);
       rect(-0.15, 0.05, 0.3, 0.25);
-      strokeWeight(1 / s);
+      strokeWeight(1);
       line(-0.05, 0.15, 0.05, 0.15);
       line(-0.05, 0.2, 0.05, 0.2);
     } else if (this.label == "delete") {
       stroke(0);
-      strokeWeight(3 / s);
+      strokeWeight(3);
       noFill();
       rect(-0.2, -0.2, 0.4, 0.5);
       line(-0.25, -0.2, 0.25, -0.2);
       arc(0, -0.2, 0.1, 0.1, -PI, 0);
-      strokeWeight(2 / s);
+      strokeWeight(2);
       line(-0.1, -0.1, -0.1, 0.2);
       line(0, -0.1, 0, 0.2);
       line(0.1, -0.1, 0.1, 0.2);
     } else if (this.label == "full") {
       stroke(0);
-      strokeWeight(3 / s);
+      strokeWeight(3);
       line(-0.25, -0.25, -0.15, -0.25);
       line(0.25, -0.25, 0.15, -0.25);
       line(-0.25, 0.25, -0.15, 0.25);
@@ -555,7 +566,7 @@ class Button {
       line(0.25, 0.25, 0.25, 0.15);
     } else if (this.label == "back") {
       stroke(0);
-      strokeWeight(3 / s);
+      strokeWeight(3);
       line(-0.25, 0, 0.25, 0);
       line(-0.25, 0, 0, -0.25);
       line(-0.25, 0, 0, 0.25);
