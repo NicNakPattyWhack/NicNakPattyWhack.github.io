@@ -14,7 +14,7 @@ let buttonSelected = null;
 let sliderSelected = null;
 let mouseOffset;
 let currentSide = 0;
-let runPrint = false;
+let upload = false;
 let midPoint;
 let printScale = 1;
 let myFont;
@@ -55,10 +55,11 @@ function setup() {
   buttons.push(new Button(width - 30, 30, 40, color(225, 225, 225), "line", false));
   buttons.push(new Button(width - 80, 30, 40, color(225, 225, 225), "curve", false));
   buttons.push(new Button(width - 130, 30, 40, color(255, 160, 160), "delete", false));
-  buttons.push(new Button(width - 180, 30, 40, color(160, 255, 160), "print", false));
+  buttons.push(new Button(width - 180, 30, 40, color(160, 255, 160), "upload", false));
   buttons.push(new Button(width - 230, 30, 40, color(160, 160, 255), "full", false));
   buttons.push(new Button(30, 30, 40, color(255, 160, 160), "back", true));
   buttons.push(new Button(width - 230, 30, 40, color(160, 255, 160), "save", true));
+  buttons.push(new Button(width - 280, 30, 40, color(160, 255, 160), "print", true));
 
 
   edgeButtons.push(new edgeButton(width - 120, 80, width - 40, 80, 0));
@@ -110,18 +111,14 @@ function keyPressed() {
 
 function draw() {
   background(255);
-  // background(128 + 255 * noise(0, frameCount * 0.01), 128 + 255 * noise(10, frameCount * 0.01), 128 + 255 * noise(0, frameCount * 0.01));
 
-  for (let button of buttons) {
-    if (runPrint == button.displayOnPrintScreen) button.display();
-  }
-  for (let slider of sliders) {
-    if (runPrint == slider.displayOnPrintScreen) slider.display();
-  }
+  // pointSelected = null;
+  // lineSelected = null;
+  // background(128 + 255 * noise(0, frameCount * 0.01), 128 + 255 * noise(10, frameCount * 0.01), 128 + 255 * noise(0, frameCount * 0.01));
 
   printScale = sliders[0].value;
 
-  if (!runPrint) {
+  if (!upload) {
     push();
     strokeWeight(5);
     for (let v of vertices) {
@@ -129,7 +126,7 @@ function draw() {
     }
     pop();
 
-    drawEverything();
+    drawEverything(false);
 
     for (let edgeButton of edgeButtons) {
       edgeButton.display();
@@ -146,14 +143,21 @@ function draw() {
 
       translate(-midPoint.x, -midPoint.y);
 
-      drawEverything();
+      drawEverything(false);
 
       pop();
     }
   }
+
+  for (let button of buttons) {
+    if (upload == button.displayOnPrintScreen) button.display();
+  }
+  for (let slider of sliders) {
+    if (upload == slider.displayOnPrintScreen) slider.display();
+  }
 }
 
-function drawEverything() {
+function drawEverything(onlyTesselation) {
   let closest = 100;
   // pointSelected = null;
   // lineSelected = null;
@@ -183,7 +187,7 @@ function drawEverything() {
       x0 = i > 0 ? lines[i - 1].points[lines[i - 1].points.length - 1].x : x0;
       y0 = i > 0 ? lines[i - 1].points[lines[i - 1].points.length - 1].y : y0;
 
-      if (!runPrint) {
+      if (!upload) {
         for (let offset of [0, dim - 300]) {
           for (let j in lines[i].points) {
             let x = lines[i].points[j].x;
@@ -196,7 +200,7 @@ function drawEverything() {
               pointSelected = lines[i].points[j];
             }
 
-            if (lines[i].type == "curve") {
+            if (lines[i].type == "curve" && !onlyTesselation) {
               push();
               stroke(100, 64);
               strokeWeight(3);
@@ -210,10 +214,10 @@ function drawEverything() {
         }
       }
 
-      for (let n of [0, dim - 300]) {
+      for (let offset of [0, dim - 300]) {
         push();
-        if (lines[i].side == 0) translate(0, n);
-        else translate(n, 0);
+        if (lines[i].side == 0) translate(0, offset);
+        else translate(offset, 0);
         if (lines[i].type == "line") {
           line(x0, y0, x1, y1);
         } else if (lines[i].type == "curve") {
@@ -224,21 +228,31 @@ function drawEverything() {
     }
   }
 
-  if (lineSelected != null && pointSelected != null && lineSelected.side == currentSide && pointSelected.dist(createVector(mouseX, mouseY)) < 20) {
-    push();
-    strokeWeight(5);
-    for (let p of lineSelected.points) {
-      point(p.x, p.y);
-    }
-    pop();
+  if (lineSelected != null && pointSelected != null && lineSelected.side == currentSide && !onlyTesselation) {
+    for (let offset of [0, dim - 300]) {
+      let d;
+      push();
+      if (currentSide == 0 && pointSelected.dist(createVector(mouseX, mouseY - offset)) < 20) {
+        d = pointSelected.dist(createVector(mouseX, mouseY + offset)) < 20;
+        translate(0, offset);
+      } else if (currentSide == 1 && pointSelected.dist(createVector(mouseX - offset, mouseY)) < 20) {
+        d = pointSelected.dist(createVector(mouseX + offset, mouseY)) < 20;
+        translate(offset, 0);
+      }
 
-    push();
-    translate(pointSelected);
-    // strokeWeight(1);
-    noStroke();
-    fill(0, 128, 255, 64);
-    circle(0, 0, 15);
-    pop();
+      if (d < 20) {
+        strokeWeight(5);
+        for (let p of lineSelected.points) {
+          point(p.x, p.y);
+        }
+
+        translate(pointSelected);
+        noStroke();
+        fill(0, 128, 255, 64);
+        circle(0, 0, 15);
+        pop();
+      }
+    }
   }
 }
 
@@ -249,16 +263,15 @@ function mousePressed() {
   buttonSelected = null;
 
   for (let button of buttons) {
-    if (button.hover() && button.displayOnPrintScreen == runPrint) {
+    if (button.hover() && button.displayOnPrintScreen == upload) {
       itemSelectedType = "button";
-      console.log(button.label);
 
       if (button.label == "line" || button.label == "curve") {
         addLine(button.label);
         lineType = button.label;
         return;
-      } else if (button.label == "print") {
-        runPrint = true;
+      } else if (button.label == "upload") {
+        upload = true;
         return;
       } else if (button.label == "delete") {
         for (let i = tesselation[currentSide].lines.length - 1; i >= 0; i--) {
@@ -272,9 +285,30 @@ function mousePressed() {
         fullscreen(true);
         return;
       } else if (button.label == "save") {
+        noLoop();
+        background(255);
+        let x = [(width * 0.25), (width * 0.75), (width * 0.75), (width * 0.25)];
+        let y = [(height * 0.25), (height * 0.25), (height * 0.75), (height * 0.75)];
+        for (let i = 0; i < 4; i++) {
+          push();
+          translate(x[i], y[i]);
+          scale(printScale * 0.5);
+          rotate((PI / 2) * (i + sliders[1].value));
+
+          translate(-midPoint.x, -midPoint.y);
+
+          drawEverything(false);
+
+          pop();
+        }
+        save("tesselation.svg");
+        console.log("SAVE");
+        return;
+      } else if (button.label == "print") {
+        console.log("PRINT");
         return;
       } else if (button.label == "back") {
-        runPrint = false;
+        upload = false;
         return;
       }
       return;
@@ -303,7 +337,7 @@ function mousePressed() {
   for (let button of buttons) {
     let d = dist(mouseX, mouseY, button.pos.x, button.pos.y);
     if (d < button.size / 2) {
-      if (!runPrint) {
+      if (!upload) {
 
       }
     }
@@ -329,10 +363,7 @@ function mousePressed() {
           let d;
           if (currentSide == 0) d = dist(p.x, p.y, mouseX, mouseY - offset);
           else if (currentSide == 1) d = dist(p.x, p.y, mouseX - offset, mouseY);
-          console.log(offset);
 
-          // let d = currentSide == 0 ? dist(mouseX, mouseY - offset, p.x, p.y) : dist(mouseX - n, mouseY, p.x, p.y);
-          // let d = dist(p.x, p.y, mouseX, mouseY);
           if (d < nearestDist && d < 20) {
             itemSelectedType = "line";
             nearestLine = l;
@@ -349,7 +380,6 @@ function mousePressed() {
   }
   lineSelected = nearestLine;
   pointSelected = nearestPoint;
-  console.log(itemSelectedType, nearestLine, nearestDist);
 }
 
 function mouseReleased() {
@@ -359,12 +389,8 @@ function mouseReleased() {
   buttonSelected = null;
   mouseOffset.set(0, 0);
 
-  if (!runPrint) {
+  if (!upload) {
     for (let i in vertices) {
-      // for (let n of [0, dim - 300]) {
-      // let d = currentSize == 0 ? dist(pmouseX, pmouseY - n, vertices[i].x, vertices[i].y) : dist(pmouseX - n, pmouseY, vertices[i].x, vertices[i].y);
-      // }
-      // let d = dist(pmouseX, pmouseY, vertices[i].x, vertices[i].y);
       let d = dist(pmouseX, pmouseY, vertices[i].x, vertices[i].y);
       if (d < 10) {
         currentSide = min(1, currentSide + 1);
@@ -374,33 +400,23 @@ function mouseReleased() {
 }
 
 function mouseDragged() {
-  console.log(mouseOffset.x, mouseOffset.y, itemSelectedType, pointSelected);
   if (itemSelectedType == "slider") {
-    // for (let slider of sliders) {
     let slider = sliders[sliderSelected];
     let m = map(mouseX, slider.p1.x, slider.p2.x, slider.range[0], slider.range[1]);
     let d = (slider.range[1] - slider.range[0]);
     if (abs(slider.defaultValue - m) < d * 0.05) slider.value = slider.defaultValue;
     else slider.value = floor(constrain(m, slider.range[0], slider.range[1]) / slider.step) * slider.step;
-    // }
   }
 
-  if (!runPrint && itemSelectedType == "line") {
+  if (!upload && itemSelectedType == "line") {
     if (pointSelected != null && lineSelected != null && lineSelected.side == currentSide) {
-      console.log(lineSelected.side == currentSide);
       pointSelected.set(mouseX + mouseOffset.x, mouseY + mouseOffset.y);
       for (let v of vertices) {
-        // for (let n of [0, dim - 300]) {
-        // console.log(n)
-        // for (let ofset of [0, dim - 300]) {
         let d = dist(v.x, v.y, mouseX + mouseOffset.x, mouseY + mouseOffset.y);
         if (d < 10) {
           pointSelected.set(v.x, v.y);
-          // tesselation[currentSide].lines[lineSelected].points[pointSelected].set(mouseX, mouseY - n);
           return false;
         }
-        // }
-        // }
       }
     }
   }
@@ -443,9 +459,7 @@ class Line {
     this.type = type;
     this.side = side;
     this.points = [createVector(x1, y1)];
-    // if (this.type == "line") this.points = [createVector(x1, y1)];
 
-    console.log(type);
     if (type == "curve") {
       this.points.push(createVector(x2, y2));
       this.points.push(createVector(x3, y3));
@@ -523,6 +537,20 @@ class Button {
       strokeWeight(1);
       line(-0.05, 0.15, 0.05, 0.15);
       line(-0.05, 0.2, 0.05, 0.2);
+    } else if (this.label == "upload") {
+      stroke(0);
+      strokeWeight(3);
+      beginShape();
+      vertex(-0.1, -0.15);
+      vertex(-0.2, -0.15);
+      vertex(-0.2, 0.25);
+      vertex(0.2, 0.25);
+      vertex(0.2, -0.15);
+      vertex(0.1, -0.15);
+      endShape();
+      line(0, 0.05, 0, -0.35);
+      line(0, -0.35, -0.1, -0.25);
+      line(0, -0.35, 0.1, -0.25);
     } else if (this.label == "delete") {
       stroke(0);
       strokeWeight(3);
@@ -551,6 +579,18 @@ class Button {
       line(-0.25, 0, 0.25, 0);
       line(-0.25, 0, 0, -0.25);
       line(-0.25, 0, 0, 0.25);
+    } if (this.label == "save") {
+      stroke(0);
+      strokeWeight(3);
+      beginShape();
+      vertex(-0.2, 0.05);
+      vertex(-0.2, 0.2);
+      vertex(0.2, 0.2);
+      vertex(0.2, 0.05);
+      endShape();
+      line(0, 0, 0, -0.25);
+      line(0, 0.05, -0.1, -0.05);
+      line(0, 0.05, 0.1, -0.05);
     }
     pop();
   }
@@ -619,7 +659,7 @@ class Slider {
 
   display() {
     push();
-    stroke(128);
+    stroke(128, 100);
     strokeWeight(5);
     line(this.p1.x, this.p1.y, this.p2.x, this.p2.y);
     stroke(64);
