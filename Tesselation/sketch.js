@@ -26,8 +26,8 @@ function preload() {
 function setup() {
   // createCanvas(displayWidth, displayHeight);
   // createCanvas(displayHeight, displayWidth);
-  if (windowWidth > windowHeight) createCanvas(windowWidth, windowHeight, SVG);
-  else if (windowWidth < windowHeight) createCanvas(windowHeight, windowWidth, SVG);
+  if (windowWidth > windowHeight) createCanvas(windowWidth, windowHeight);
+  else if (windowWidth < windowHeight) createCanvas(windowHeight, windowWidth);
   // frameRate(30)
 
   dim = min(width, height);
@@ -112,6 +112,10 @@ function keyPressed() {
 function draw() {
   background(255);
 
+  noStroke();
+  fill(0);
+  text(mouseIsPressed, mouseX, mouseY - 20);
+
   // pointSelected = null;
   // lineSelected = null;
   // background(128 + 255 * noise(0, frameCount * 0.01), 128 + 255 * noise(10, frameCount * 0.01), 128 + 255 * noise(0, frameCount * 0.01));
@@ -155,6 +159,9 @@ function draw() {
   for (let slider of sliders) {
     if (upload == slider.displayOnPrintScreen) slider.display();
   }
+
+  // text(pointSelected, 5, 20)
+  // text(lineSelected, 5, 40)
 }
 
 function drawEverything(onlyTesselation) {
@@ -285,7 +292,7 @@ function mousePressed() {
         fullscreen(true);
         return;
       } else if (button.label == "save") {
-        noLoop();
+        // noLoop();
         background(255);
         let x = [(width * 0.25), (width * 0.75), (width * 0.75), (width * 0.25)];
         let y = [(height * 0.25), (height * 0.25), (height * 0.75), (height * 0.75)];
@@ -305,6 +312,22 @@ function mousePressed() {
         console.log("SAVE");
         return;
       } else if (button.label == "print") {
+        background(255);
+        let x = [(width * 0.25), (width * 0.75), (width * 0.75), (width * 0.25)];
+        let y = [(height * 0.25), (height * 0.25), (height * 0.75), (height * 0.75)];
+        for (let i = 0; i < 4; i++) {
+          push();
+          translate(x[i], y[i]);
+          scale(printScale * 0.5);
+          rotate((PI / 2) * (i + sliders[1].value));
+
+          translate(-midPoint.x, -midPoint.y);
+
+          drawEverything(false);
+
+          pop();
+        }
+        print();
         console.log("PRINT");
         return;
       } else if (button.label == "back") {
@@ -517,16 +540,16 @@ class Button {
       circle(-0.2, 0.25, 0);
     } else if (this.label == "curve") {
       stroke(64);
-      strokeWeight(2);
+      strokeWeight(2/ s);
       bezier(0.2, -0.25, -0.25, -0.1, 0.25, 0.2, -0.2, 0.25);
-      strokeWeight(5);
+      strokeWeight(5/s);
       circle(0.2, -0.25, 0);
       circle(-0.25, -0.1, 0);
       circle(0.25, 0.2, 0);
       circle(-0.2, 0.25, 0);
     } else if (this.label == "print") {
       stroke(0);
-      strokeWeight(3);
+      strokeWeight(3/s);
       line(-0.25, -0.2, 0.25, -0.2);
       line(-0.25, -0.2, -0.25, 0.2);
       line(0.25, -0.2, 0.25, 0.2);
@@ -534,12 +557,12 @@ class Button {
       line(0.25, 0.2, 0.15, 0.2);
       line(-0.25, -0.1, 0.25, -0.1);
       rect(-0.15, 0.05, 0.3, 0.25);
-      strokeWeight(1);
+      strokeWeight(1/s);
       line(-0.05, 0.15, 0.05, 0.15);
       line(-0.05, 0.2, 0.05, 0.2);
     } else if (this.label == "upload") {
       stroke(0);
-      strokeWeight(3);
+      strokeWeight(3/s);
       beginShape();
       vertex(-0.1, -0.15);
       vertex(-0.2, -0.15);
