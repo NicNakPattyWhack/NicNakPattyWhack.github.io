@@ -12,6 +12,7 @@ let pointSelected = null;
 let lineSelected = null;
 let buttonSelected = null;
 let sliderSelected = null;
+let saveSVGScreen;
 let mouseOffset;
 let currentSide = 0;
 let upload = false;
@@ -26,8 +27,14 @@ function preload() {
 function setup() {
   // createCanvas(displayWidth, displayHeight);
   // createCanvas(displayHeight, displayWidth);
-  if (windowWidth > windowHeight) createCanvas(windowWidth, windowHeight);
-  else if (windowWidth < windowHeight) createCanvas(windowHeight, windowWidth);
+  if (windowWidth > windowHeight) {
+    createCanvas(windowWidth, windowHeight);
+    // saveSVGScreen = createGraphics(windowWidth, windowHeight, SVG);
+  }
+  else if (windowWidth < windowHeight) {
+    createCanvas(windowHeight, windowWidth);
+    // saveSVGScreen = createGraphics(windowHeight, windowWidth, SVG);
+  }
   // frameRate(30)
 
   dim = min(width, height);
@@ -112,9 +119,9 @@ function keyPressed() {
 function draw() {
   background(255);
 
-  noStroke();
-  fill(0);
-  text(mouseIsPressed, mouseX, mouseY - 20);
+  // noStroke();
+  // fill(0);
+  // text(mouseIsPressed, mouseX, mouseY - 20);
 
   // pointSelected = null;
   // lineSelected = null;
@@ -124,6 +131,7 @@ function draw() {
 
   if (!upload) {
     push();
+    stroke(0);
     strokeWeight(5);
     for (let v of vertices) {
       point(v);
@@ -223,6 +231,8 @@ function drawEverything(onlyTesselation) {
 
       for (let offset of [0, dim - 300]) {
         push();
+        stroke(0);
+        strokeWeight(2);
         if (lines[i].side == 0) translate(0, offset);
         else translate(offset, 0);
         if (lines[i].type == "line") {
@@ -523,7 +533,7 @@ class Button {
     scale(s);
 
     stroke(red(this.col) * 0.7, green(this.col) * 0.7, blue(this.col) * 0.7);
-    strokeWeight(3);
+    strokeWeight(3 / s);
     fill(this.col);
 
     if (this.pressed) {
@@ -533,23 +543,23 @@ class Button {
 
     if (this.label == "line") {
       stroke(64);
-      strokeWeight(2);
+      strokeWeight(2 / s);
       line(0.2, -0.25, -0.2, 0.25);
-      strokeWeight(5);
-      circle(0.2, -0.25, 0);
-      circle(-0.2, 0.25, 0);
+      strokeWeight(5 / s);
+      point(0.2, -0.25);
+      point(-0.2, 0.25);
     } else if (this.label == "curve") {
       stroke(64);
-      strokeWeight(2/ s);
+      strokeWeight(2 / s);
       bezier(0.2, -0.25, -0.25, -0.1, 0.25, 0.2, -0.2, 0.25);
-      strokeWeight(5/s);
-      circle(0.2, -0.25, 0);
-      circle(-0.25, -0.1, 0);
-      circle(0.25, 0.2, 0);
-      circle(-0.2, 0.25, 0);
+      strokeWeight(5 / s);
+      point(0.2, -0.25);
+      point(-0.25, -0.1);
+      point(0.25, 0.2);
+      point(-0.2, 0.25);
     } else if (this.label == "print") {
       stroke(0);
-      strokeWeight(3/s);
+      strokeWeight(3 / s);
       line(-0.25, -0.2, 0.25, -0.2);
       line(-0.25, -0.2, -0.25, 0.2);
       line(0.25, -0.2, 0.25, 0.2);
@@ -557,12 +567,12 @@ class Button {
       line(0.25, 0.2, 0.15, 0.2);
       line(-0.25, -0.1, 0.25, -0.1);
       rect(-0.15, 0.05, 0.3, 0.25);
-      strokeWeight(1/s);
+      strokeWeight(1 / s);
       line(-0.05, 0.15, 0.05, 0.15);
       line(-0.05, 0.2, 0.05, 0.2);
     } else if (this.label == "upload") {
       stroke(0);
-      strokeWeight(3/s);
+      strokeWeight(3 / s);
       beginShape();
       vertex(-0.1, -0.15);
       vertex(-0.2, -0.15);
@@ -576,18 +586,18 @@ class Button {
       line(0, -0.35, 0.1, -0.25);
     } else if (this.label == "delete") {
       stroke(0);
-      strokeWeight(3);
+      strokeWeight(3 / s);
       noFill();
       rect(-0.2, -0.2, 0.4, 0.5);
       line(-0.25, -0.2, 0.25, -0.2);
       arc(0, -0.2, 0.1, 0.1, -PI, 0);
-      strokeWeight(2);
+      strokeWeight(2 / s);
       line(-0.1, -0.1, -0.1, 0.2);
       line(0, -0.1, 0, 0.2);
       line(0.1, -0.1, 0.1, 0.2);
     } else if (this.label == "full") {
       stroke(0);
-      strokeWeight(3);
+      strokeWeight(3 / s);
       line(-0.25, -0.25, -0.15, -0.25);
       line(0.25, -0.25, 0.15, -0.25);
       line(-0.25, 0.25, -0.15, 0.25);
@@ -598,13 +608,13 @@ class Button {
       line(0.25, 0.25, 0.25, 0.15);
     } else if (this.label == "back") {
       stroke(0);
-      strokeWeight(3);
+      strokeWeight(3 / s);
       line(-0.25, 0, 0.25, 0);
       line(-0.25, 0, 0, -0.25);
       line(-0.25, 0, 0, 0.25);
     } if (this.label == "save") {
       stroke(0);
-      strokeWeight(3);
+      strokeWeight(3 / s);
       beginShape();
       vertex(-0.2, 0.05);
       vertex(-0.2, 0.2);
