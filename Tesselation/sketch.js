@@ -66,7 +66,7 @@ function setup() {
   buttons.push(new Button(width - 230, 30, 40, color(160, 160, 255), "full", false));
   buttons.push(new Button(30, 30, 40, color(255, 160, 160), "back", true));
   buttons.push(new Button(width - 230, 30, 40, color(160, 255, 160), "save", true));
-  buttons.push(new Button(width - 280, 30, 40, color(160, 255, 160), "print", true));
+  // buttons.push(new Button(width - 280, 30, 40, color(160, 160, 255), "print", true));
 
 
   edgeButtons.push(new edgeButton(width - 120, 80, width - 40, 80, 0));
@@ -288,6 +288,7 @@ function mousePressed() {
         lineType = button.label;
         return;
       } else if (button.label == "upload") {
+        resizeCanvas(windowWidth, windowWidth);
         upload = true;
         return;
       } else if (button.label == "delete") {
@@ -304,6 +305,7 @@ function mousePressed() {
       } else if (button.label == "save") {
         // noLoop();
         background(255);
+        // resizeCanvas(window, 1000);
         let x = [(width * 0.25), (width * 0.75), (width * 0.75), (width * 0.25)];
         let y = [(height * 0.25), (height * 0.25), (height * 0.75), (height * 0.75)];
         for (let i = 0; i < 4; i++) {
@@ -312,13 +314,14 @@ function mousePressed() {
           scale(printScale * 0.5);
           rotate((PI / 2) * (i + sliders[1].value));
 
-          translate(-midPoint.x, -midPoint.y);
+          // translate(-midPoint.x, -midPoint.y);
+          translate(-width / 2, -height / 2)
 
           drawEverything(false);
 
           pop();
         }
-        save("tesselation.svg");
+        saveCanvas("tesselation.png");
         console.log("SAVE");
         return;
       } else if (button.label == "print") {
@@ -341,6 +344,7 @@ function mousePressed() {
         console.log("PRINT");
         return;
       } else if (button.label == "back") {
+        resizeCanvas(windowHeight, windowWidth);
         upload = false;
         return;
       }
