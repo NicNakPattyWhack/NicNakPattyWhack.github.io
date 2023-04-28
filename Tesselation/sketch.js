@@ -63,7 +63,7 @@ function setup() {
   buttons.push(new Button(width - 80, 30, 40, color(225, 225, 225), "curve", false));
   buttons.push(new Button(width - 130, 30, 40, color(255, 160, 160), "delete", false));
   buttons.push(new Button(width - 180, 30, 40, color(160, 255, 160), "upload", false));
-  buttons.push(new Button(width - 230, 30, 40, color(160, 160, 255), "full", false));
+  // buttons.push(new Button(width - 230, 30, 40, color(160, 160, 255), "full", false));
   buttons.push(new Button(30, 30, 40, color(255, 160, 160), "back", true));
   buttons.push(new Button(width - 230, 30, 40, color(160, 255, 160), "save", true));
   // buttons.push(new Button(width - 280, 30, 40, color(160, 160, 255), "print", true));
@@ -74,7 +74,7 @@ function setup() {
   edgeButtons.push(new edgeButton(width - 40, 80, width - 40, 160, 1));
   edgeButtons.push(new edgeButton(width - 120, 160, width - 120, 80, 1));
 
-  sliders.push(new Slider(width - 150, 30, width - 40, 30, 0.5, 1.5, 0.1, 1, color(255, 80, 80), "scale", true));
+  sliders.push(new Slider(width - 150, 30, width - 40, 30, 0.5, 2, 0.1, 1, color(255, 80, 80), "scale", true));
   sliders.push(new Slider(width - 150, 60, width - 40, 60, 0, 3, 1, 1, color(80, 80, 255), "rotate", true));
 
   // vertices.push(createVector(150, 150));
@@ -288,7 +288,7 @@ function mousePressed() {
         lineType = button.label;
         return;
       } else if (button.label == "upload") {
-        resizeCanvas(windowWidth, windowWidth);
+        // resizeCanvas(windowWidth, windowWidth);
         upload = true;
         return;
       } else if (button.label == "delete") {
@@ -344,7 +344,7 @@ function mousePressed() {
         console.log("PRINT");
         return;
       } else if (button.label == "back") {
-        resizeCanvas(windowHeight, windowWidth);
+        // resizeCanvas(windowHeight, windowWidth)
         upload = false;
         return;
       }
