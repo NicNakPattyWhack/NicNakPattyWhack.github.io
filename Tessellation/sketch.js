@@ -2,6 +2,8 @@
 
 // p5.disableFriendlyErrors = true;
 
+let actionHistory = [];
+let historyIndex = 0;
 let tesselation;
 let buttons = [];
 let edgeButtons = [];
@@ -67,6 +69,8 @@ function setup() {
   buttons.push(new Button(30, 30, 40, color(255, 160, 160), "back", true));
   buttons.push(new Button(width - 230, 30, 40, color(160, 255, 160), "save", true));
   // buttons.push(new Button(width - 280, 30, 40, color(160, 160, 255), "print", true));
+  buttons.push(new Button(width - 330, 30, 40, color(160, 160, 255), "undo", false));
+  buttons.push(new Button(width - 330, 30, 40, color(160, 160, 255), "redo", false));
 
 
   edgeButtons.push(new edgeButton(width - 120, 80, width - 40, 80, 0));
@@ -114,6 +118,12 @@ function setup() {
 
 function keyPressed() {
   if (key == "f") fullscreen(true);
+}
+
+function updateHistory() {
+  actionHistory.splice(historyIndex + 1, Infinity);
+  actionHistory.push(tesselation);
+  historyIndex++;
 }
 
 function draw() {
@@ -284,6 +294,8 @@ function mousePressed() {
       itemSelectedType = "button";
 
       if (button.label == "line" || button.label == "curve") {
+        updateHistory();
+
         addLine(button.label);
         lineType = button.label;
         return;
@@ -292,6 +304,8 @@ function mousePressed() {
         upload = true;
         return;
       } else if (button.label == "delete") {
+        updateHistory();
+
         for (let i = tesselation[currentSide].lines.length - 1; i >= 0; i--) {
           if (tesselation[currentSide].lines[i].side == currentSide) {
             tesselation[currentSide].lines.splice(i, 1);
@@ -315,7 +329,7 @@ function mousePressed() {
           rotate((PI / 2) * (i + sliders[1].value));
 
           // translate(-midPoint.x, -midPoint.y);
-          translate(-width / 2, -height / 2)
+          translate(-width / 2, -height / 2);
 
           drawEverything(false);
 
@@ -347,6 +361,12 @@ function mousePressed() {
         // resizeCanvas(windowHeight, windowWidth)
         upload = false;
         return;
+      } else if (button.label == "undo" && historyIndex > 0) {
+        historyIndex--;
+        tesselation = actionHistory[historyIndex];
+      } else if (button.label == "redo" && historyIndex < actionHistory.length - 1) {
+        historyIndex++;
+        tesselation = actionHistory[historyIndex];
       }
       return;
     }
@@ -420,6 +440,8 @@ function mousePressed() {
 }
 
 function mouseReleased() {
+  if (itemSelectedType == "line") updateHistory();
+
   itemSelectedType = null;
   lineSelected = null;
   pointSelected = null;
