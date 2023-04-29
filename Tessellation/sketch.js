@@ -69,7 +69,7 @@ function setup() {
   buttons.push(new Button(30, 30, 40, color(255, 160, 160), "back", true));
   buttons.push(new Button(width - 230, 30, 40, color(160, 255, 160), "save", true));
   // buttons.push(new Button(width - 280, 30, 40, color(160, 160, 255), "print", true));
-  buttons.push(new Button(width - 330, 30, 40, color(160, 160, 255), "undo", false));
+  buttons.push(new Button(width - 280, 30, 40, color(160, 160, 255), "undo", false));
   buttons.push(new Button(width - 330, 30, 40, color(160, 160, 255), "redo", false));
 
 
@@ -121,13 +121,31 @@ function keyPressed() {
 }
 
 function updateHistory() {
+  background(255, 0, 0);
+  frameRate(5);
   actionHistory.splice(historyIndex + 1, Infinity);
-  actionHistory.push(tesselation);
+  actionHistory.push([
+    {
+      end: tesselation[0].end,
+      lines: tesselation[0].lines
+    },
+    {
+      end: tesselation[1].end,
+      lines: tesselation[1].lines
+    }
+  ]);
   historyIndex++;
 }
 
 function draw() {
   background(255);
+
+  push();
+  noStroke();
+  fill(0);
+  text(historyIndex, 20, 20);
+  text(actionHistory, 20, 40);
+  pop();
 
   // noStroke();
   // fill(0);
@@ -638,7 +656,7 @@ class Button {
       line(-0.25, 0, 0.25, 0);
       line(-0.25, 0, 0, -0.25);
       line(-0.25, 0, 0, 0.25);
-    } if (this.label == "save") {
+    } else if (this.label == "save") {
       stroke(0);
       strokeWeight(3 / s);
       beginShape();
@@ -650,6 +668,12 @@ class Button {
       line(0, 0, 0, -0.25);
       line(0, 0.05, -0.1, -0.05);
       line(0, 0.05, 0.1, -0.05);
+    } else if (this.label == "undo") {
+      stroke(0);
+      strokeWeight(3 / s);
+      arc(0, 0, 0.4, 0.4, -HALF_PI, PI);
+      line(-0.2, 0, -0.25, 0.05);
+      line(-0.2, 0, -0.15, 0.05);
     }
     pop();
   }
