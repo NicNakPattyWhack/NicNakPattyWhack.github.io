@@ -4,7 +4,7 @@
 
 let actionHistory = [];
 let historyIndex = 0;
-let tesselation;
+let tessellation;
 let buttons = [];
 let edgeButtons = [];
 let sliders = [];
@@ -50,7 +50,7 @@ function setup() {
   // lines.push(new Line("curve", end.x, end.y, 150, 200));
   // lines.push(new Line("line", end.x, end.y, 150, 200));
 
-  tesselation = [
+  tessellation = [
     {
       end: createVector((width - dim) / 2 + 150, (height - dim) / 2 + 150),
       lines: []
@@ -70,7 +70,7 @@ function setup() {
   buttons.push(new Button(width - 230, 30, 40, color(160, 255, 160), "save", true));
   // buttons.push(new Button(width - 280, 30, 40, color(160, 160, 255), "print", true));
   buttons.push(new Button(width - 280, 30, 40, color(160, 160, 255), "undo", false));
-  buttons.push(new Button(width - 330, 30, 40, color(160, 160, 255), "redo", false));
+  buttons.push(new Button(width - 230, 30, 40, color(160, 160, 255), "redo", false));
 
 
   edgeButtons.push(new edgeButton(width - 120, 80, width - 40, 80, 0));
@@ -114,28 +114,50 @@ function setup() {
   midPoint.div(4);
 
   mouseOffset = createVector();
+
+  actionHistory.push(JSON.parse(JSON.stringify(tessellation)));
 }
 
 function keyPressed() {
   if (key == "f") fullscreen(true);
 }
 
-function updateHistory() {
-  background(255, 0, 0);
-  frameRate(5);
-  actionHistory.splice(historyIndex + 1, Infinity);
-  actionHistory.push([
-    {
-      end: tesselation[0].end,
-      lines: tesselation[0].lines
-    },
-    {
-      end: tesselation[1].end,
-      lines: tesselation[1].lines
-    }
-  ]);
+function undo() {
+  if (historyIndex > 0) {
+    historyIndex--;
+    tessellation = JSON.parse(JSON.stringify(actionHistory[historyIndex]));
+  }
+}
+
+function redo() {
+  if (historyIndex < actionHistory.length - 1) {
+    historyIndex++;
+    tessellation = JSON.parse(JSON.stringify(actionHistory[historyIndex]));
+  }
+}
+
+function addToHistory() {
+  actionHistory.splice(historyIndex, Infinity);
+  actionHistory.push(JSON.parse(JSON.stringify(tessellation)));
   historyIndex++;
 }
+
+// function updateHistory(d) {
+//   background(255, 0, 0);
+//   frameRate(5);
+//   historyIndex += d;
+//   actionHistory.splice(historyIndex, Infinity);
+//   actionHistory.push([
+//     {
+//       end: tessellation[0].end,
+//       lines: tessellation[0].lines
+//     },
+//     {
+//       end: tessellation[1].end,
+//       lines: tessellation[1].lines
+//     }
+//   ]);
+// }
 
 function draw() {
   background(255);
@@ -144,7 +166,7 @@ function draw() {
   noStroke();
   fill(0);
   text(historyIndex, 20, 20);
-  text(actionHistory, 20, 40);
+  text((actionHistory.length), 20, 40);
   pop();
 
   // noStroke();
@@ -209,7 +231,7 @@ function drawEverything(onlyTesselation) {
   strokeWeight(2);
   // beginShape();
   // vertex(150, 150);
-  for (let t of tesselation) {
+  for (let t of tessellation) {
     let lines = t.lines;
     for (let i in lines) {
       let x0 = vertices[0].x;
@@ -243,10 +265,10 @@ function drawEverything(onlyTesselation) {
               pointSelected = lines[i].points[j];
             }
 
-            if (lines[i].type == "curve" && !onlyTesselation) {
+            if (lines[i].type == "curve" && !onlyTesselation && lines[i].side == currentSide) {
               push();
               stroke(100, 64);
-              strokeWeight(3);
+              strokeWeight(2);
               if (lines[i].side == 0) translate(0, offset);
               if (lines[i].side == 1) translate(offset, 0);
               line(x0, y0, x1, y1);
@@ -312,32 +334,27 @@ function mousePressed() {
       itemSelectedType = "button";
 
       if (button.label == "line" || button.label == "curve") {
-        updateHistory();
-
         addLine(button.label);
-        lineType = button.label;
+        addToHistory();
         return;
       } else if (button.label == "upload") {
         // resizeCanvas(windowWidth, windowWidth);
         upload = true;
         return;
       } else if (button.label == "delete") {
-        updateHistory();
-
-        for (let i = tesselation[currentSide].lines.length - 1; i >= 0; i--) {
-          if (tesselation[currentSide].lines[i].side == currentSide) {
-            tesselation[currentSide].lines.splice(i, 1);
+        for (let i = tessellation[currentSide].lines.length - 1; i >= 0; i--) {
+          if (tessellation[currentSide].lines[i].side == currentSide) {
+            tessellation[currentSide].lines.splice(i, 1);
             break;
           }
         }
+        addToHistory();
         return;
       } else if (button.label == "full") {
         fullscreen(true);
         return;
       } else if (button.label == "save") {
-        // noLoop();
         background(255);
-        // resizeCanvas(window, 1000);
         let x = [(width * 0.25), (width * 0.75), (width * 0.75), (width * 0.25)];
         let y = [(height * 0.25), (height * 0.25), (height * 0.75), (height * 0.75)];
         for (let i = 0; i < 4; i++) {
@@ -346,14 +363,14 @@ function mousePressed() {
           scale(printScale * 0.5);
           rotate((PI / 2) * (i + sliders[1].value));
 
-          // translate(-midPoint.x, -midPoint.y);
-          translate(-width / 2, -height / 2);
+          translate(-midPoint.x, -midPoint.y);
+          // translate(-width / 2, -height / 2);
 
           drawEverything(false);
 
           pop();
         }
-        saveCanvas("tesselation.png");
+        saveCanvas("tessellation.png");
         console.log("SAVE");
         return;
       } else if (button.label == "print") {
@@ -379,12 +396,12 @@ function mousePressed() {
         // resizeCanvas(windowHeight, windowWidth)
         upload = false;
         return;
-      } else if (button.label == "undo" && historyIndex > 0) {
-        historyIndex--;
-        tesselation = actionHistory[historyIndex];
-      } else if (button.label == "redo" && historyIndex < actionHistory.length - 1) {
-        historyIndex++;
-        tesselation = actionHistory[historyIndex];
+      } else if (button.label == "undo") {
+        undo();
+        return;
+      } else if (button.label == "redo") {
+        redo();
+        return;
       }
       return;
     }
@@ -430,7 +447,7 @@ function mousePressed() {
   let nearestLine;
   let nearestPoint;
   let nearestDist = Infinity;
-  for (let t of tesselation) {
+  for (let t of tessellation) {
     for (let l of t.lines) {
       for (let j in l.points) {
         let p = l.points[j];
@@ -458,7 +475,7 @@ function mousePressed() {
 }
 
 function mouseReleased() {
-  if (itemSelectedType == "line") updateHistory();
+  if (itemSelectedType == "line") addToHistory();
 
   itemSelectedType = null;
   lineSelected = null;
@@ -501,25 +518,25 @@ function mouseDragged() {
 
 function addLine(type) {
   if (pointSelected == null && lineSelected == null) {
-    if (tesselation[currentSide].lines.length > 0) {
-      let i = tesselation[currentSide].lines.length - 1;
-      let j = tesselation[currentSide].lines[i].points.length - 1;
-      tesselation[currentSide].end.set(tesselation[currentSide].lines[i].points[j]);
+    if (tessellation[currentSide].lines.length > 0) {
+      let i = tessellation[currentSide].lines.length - 1;
+      let j = tessellation[currentSide].lines[i].points.length - 1;
+      tessellation[currentSide].end.set(tessellation[currentSide].lines[i].points[j]);
     }
 
     if (type == "line") {
-      tesselation[currentSide].lines.push(new Line("line", currentSide, tesselation[currentSide].end.x + 50, tesselation[currentSide].end.y + 50));
+      tessellation[currentSide].lines.push(new Line("line", currentSide, tessellation[currentSide].end.x + 50, tessellation[currentSide].end.y + 50));
     } else if (type == "curve") {
-      tesselation[currentSide].lines.push(
+      tessellation[currentSide].lines.push(
         new Line(
           "curve",
           currentSide,
-          tesselation[currentSide].end.x + 50,
-          tesselation[currentSide].end.y - 50,
-          tesselation[currentSide].end.x + 50,
-          tesselation[currentSide].end.y + 50,
-          tesselation[currentSide].end.x + 100,
-          tesselation[currentSide].end.y
+          tessellation[currentSide].end.x + 50,
+          tessellation[currentSide].end.y - 50,
+          tessellation[currentSide].end.x + 50,
+          tessellation[currentSide].end.y + 50,
+          tessellation[currentSide].end.x + 100,
+          tessellation[currentSide].end.y
         )
       );
     }
@@ -602,7 +619,7 @@ class Button {
       point(0.25, 0.2);
       point(-0.2, 0.25);
     } else if (this.label == "print") {
-      stroke(0);
+      stroke(64);
       strokeWeight(3 / s);
       line(-0.25, -0.2, 0.25, -0.2);
       line(-0.25, -0.2, -0.25, 0.2);
@@ -615,7 +632,7 @@ class Button {
       line(-0.05, 0.15, 0.05, 0.15);
       line(-0.05, 0.2, 0.05, 0.2);
     } else if (this.label == "upload") {
-      stroke(0);
+      stroke(64);
       strokeWeight(3 / s);
       beginShape();
       vertex(-0.1, -0.15);
@@ -629,7 +646,7 @@ class Button {
       line(0, -0.35, -0.1, -0.25);
       line(0, -0.35, 0.1, -0.25);
     } else if (this.label == "delete") {
-      stroke(0);
+      stroke(64);
       strokeWeight(3 / s);
       noFill();
       rect(-0.2, -0.2, 0.4, 0.5);
@@ -640,7 +657,7 @@ class Button {
       line(0, -0.1, 0, 0.2);
       line(0.1, -0.1, 0.1, 0.2);
     } else if (this.label == "full") {
-      stroke(0);
+      stroke(64);
       strokeWeight(3 / s);
       line(-0.25, -0.25, -0.15, -0.25);
       line(0.25, -0.25, 0.15, -0.25);
@@ -651,13 +668,13 @@ class Button {
       line(0.25, -0.25, 0.25, -0.15);
       line(0.25, 0.25, 0.25, 0.15);
     } else if (this.label == "back") {
-      stroke(0);
+      stroke(64);
       strokeWeight(3 / s);
       line(-0.25, 0, 0.25, 0);
       line(-0.25, 0, 0, -0.25);
       line(-0.25, 0, 0, 0.25);
     } else if (this.label == "save") {
-      stroke(0);
+      stroke(64);
       strokeWeight(3 / s);
       beginShape();
       vertex(-0.2, 0.05);
@@ -669,11 +686,15 @@ class Button {
       line(0, 0.05, -0.1, -0.05);
       line(0, 0.05, 0.1, -0.05);
     } else if (this.label == "undo") {
-      stroke(0);
+      stroke(64);
       strokeWeight(3 / s);
       arc(0, 0, 0.4, 0.4, -HALF_PI, PI);
-      line(-0.2, 0, -0.25, 0.05);
-      line(-0.2, 0, -0.15, 0.05);
+      triangle(0, -0.1, 0, -0.3, -0.1, -0.2);
+    } else if (this.label == "redo") {
+      stroke(64);
+      strokeWeight(3 / s);
+      arc(0, 0, 0.4, 0.4, 0, -HALF_PI);
+      triangle(0, -0.1, 0, -0.3, 0.1, -0.2);
     }
     pop();
   }
