@@ -1,7 +1,3 @@
-// save("SVG.svg")
-
-// p5.disableFriendlyErrors = true;
-
 let actionHistory = [];
 let historyIndex = 0;
 let tessellation;
@@ -27,20 +23,14 @@ function preload() {
 }
 
 function setup() {
-  // createCanvas(displayWidth, displayHeight);
-  // createCanvas(displayHeight, displayWidth);
   if (windowWidth > windowHeight) {
     createCanvas(windowWidth, windowHeight);
-    // saveSVGScreen = createGraphics(windowWidth, windowHeight, SVG);
   }
   else if (windowWidth < windowHeight) {
     createCanvas(windowHeight, windowWidth);
-    // saveSVGScreen = createGraphics(windowHeight, windowWidth, SVG);
   }
-  // frameRate(30)
 
   dim = min(width, height);
-  // end = createVector((width - dim) / 2 + 150, (height - dim) / 2 + 150);
 
   // lines.push(new Line("line", end.x, end.y));
 
@@ -115,49 +105,84 @@ function setup() {
 
   mouseOffset = createVector();
 
-  actionHistory.push(JSON.parse(JSON.stringify(tessellation)));
+  actionHistory.push(tessellationCopy(tessellation));
 }
 
 function keyPressed() {
   if (key == "f") fullscreen(true);
 }
 
+function tessellationCopy(item) {
+  let copy = [
+    {
+      end: item[0].end.copy(),
+      lines: [],
+    },
+    {
+      end: item[1].end.copy(),
+      lines: [],
+    },
+  ];
+
+  for (let i in item) {
+    for (let j in item[i].lines) {
+      let l = item[i].lines[j];
+      if (l.type == "line") {
+        copy[i].lines.push(
+          new Line("line", l.side, l.points[0].x, l.points[0].y)
+        );
+      } else if (l.type == "curve") {
+        copy[i].lines.push(
+          new Line(
+            "curve",
+            l.side,
+            l.points[0].x,
+            l.points[0].y,
+            l.points[1].x,
+            l.points[1].y,
+            l.points[2].x,
+            l.points[2].y
+          )
+        );
+      }
+    }
+  }
+
+  return copy;
+}
+
 function undo() {
   if (historyIndex > 0) {
     historyIndex--;
-    tessellation = JSON.parse(JSON.stringify(actionHistory[historyIndex]));
+    tessellation = tessellationCopy(actionHistory[historyIndex]);
   }
 }
 
 function redo() {
   if (historyIndex < actionHistory.length - 1) {
     historyIndex++;
-    tessellation = JSON.parse(JSON.stringify(actionHistory[historyIndex]));
+    tessellation = tessellationCopy(actionHistory[historyIndex]);
   }
 }
 
 function addToHistory() {
-  actionHistory.splice(historyIndex, Infinity);
-  actionHistory.push(JSON.parse(JSON.stringify(tessellation)));
+  actionHistory.splice(historyIndex + 1, Infinity);
+  // actionHistory.push(JSON.parse(JSON.stringify(tessellation)));
+  actionHistory.push(tessellationCopy(tessellation));
+  // actionHistory.push(
+  //   [
+  //     {
+  //       end: tessellation[0].end.copy(),
+  //       lines: tessellation[0].lines,
+  //     },
+  //     {
+  //       end: tessellation[1].end.copy(),
+  //       lines: tessellation[1].lines,
+  //     }
+  //   ]
+  // );
   historyIndex++;
 }
-
-// function updateHistory(d) {
-//   background(255, 0, 0);
-//   frameRate(5);
-//   historyIndex += d;
-//   actionHistory.splice(historyIndex, Infinity);
-//   actionHistory.push([
-//     {
-//       end: tessellation[0].end,
-//       lines: tessellation[0].lines
-//     },
-//     {
-//       end: tessellation[1].end,
-//       lines: tessellation[1].lines
-//     }
-//   ]);
-// }
 
 function draw() {
   background(255);
@@ -166,7 +191,11 @@ function draw() {
   noStroke();
   fill(0);
   text(historyIndex, 20, 20);
-  text((actionHistory.length), 20, 40);
+  let txt = "";
+  for (let i in actionHistory) { txt += i == historyIndex ? "•" : "·"; }
+  text(txt, 20, 40);
+  text(actionHistory[actionHistory.length - 1] == tessellation, 20, 60);
+  // text((actionHistory.length), 20, 40);
   pop();
 
   // noStroke();
@@ -267,7 +296,7 @@ function drawEverything(onlyTesselation) {
 
             if (lines[i].type == "curve" && !onlyTesselation && lines[i].side == currentSide) {
               push();
-              stroke(100, 64);
+              stroke(160, 64);
               strokeWeight(2);
               if (lines[i].side == 0) translate(0, offset);
               if (lines[i].side == 1) translate(offset, 0);
@@ -499,7 +528,7 @@ function mouseDragged() {
     let m = map(mouseX, slider.p1.x, slider.p2.x, slider.range[0], slider.range[1]);
     let d = (slider.range[1] - slider.range[0]);
     if (abs(slider.defaultValue - m) < d * 0.05) slider.value = slider.defaultValue;
-    else slider.value = floor(constrain(m, slider.range[0], slider.range[1]) / slider.step) * slider.step;
+    else slider.value = round(constrain(m, slider.range[0], slider.range[1]) / slider.step) * slider.step;
   }
 
   if (!upload && itemSelectedType == "line") {
@@ -649,13 +678,13 @@ class Button {
       stroke(64);
       strokeWeight(3 / s);
       noFill();
-      rect(-0.2, -0.2, 0.4, 0.5);
-      line(-0.25, -0.2, 0.25, -0.2);
-      arc(0, -0.2, 0.1, 0.1, -PI, 0);
+      rect(-0.2, -0.25, 0.4, 0.5);
+      line(-0.25, -0.25, 0.25, -0.25);
+      arc(0, -0.25, 0.1, 0.1, -PI, 0);
       strokeWeight(2 / s);
-      line(-0.1, -0.1, -0.1, 0.2);
-      line(0, -0.1, 0, 0.2);
-      line(0.1, -0.1, 0.1, 0.2);
+      line(-0.1, -0.15, -0.1, 0.15);
+      line(0, -0.15, 0, 0.15);
+      line(0.1, -0.15, 0.1, 0.15);
     } else if (this.label == "full") {
       stroke(64);
       strokeWeight(3 / s);
@@ -689,11 +718,13 @@ class Button {
       stroke(64);
       strokeWeight(3 / s);
       arc(0, 0, 0.4, 0.4, -HALF_PI, PI);
+      fill(64);
       triangle(0, -0.1, 0, -0.3, -0.1, -0.2);
     } else if (this.label == "redo") {
       stroke(64);
       strokeWeight(3 / s);
       arc(0, 0, 0.4, 0.4, 0, -HALF_PI);
+      fill(64);
       triangle(0, -0.1, 0, -0.3, 0.1, -0.2);
     }
     pop();
