@@ -23,13 +23,12 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(500, 500);
-  // if (windowWidth > windowHeight) {
-  //   createCanvas(windowWidth, windowHeight);
-  // }
-  // else if (windowWidth < windowHeight) {
-  //   createCanvas(windowHeight, windowWidth);
-  // }
+  if (windowWidth > windowHeight) {
+    createCanvas(windowWidth, windowHeight);
+  }
+  else if (windowWidth < windowHeight) {
+    createCanvas(windowHeight, windowWidth);
+  }
 
   dim = min(width, height);
 
