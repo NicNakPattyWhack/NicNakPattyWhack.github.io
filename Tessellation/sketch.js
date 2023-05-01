@@ -271,7 +271,7 @@ function drawEverything(onlyTesselation) {
             let y = lines[i].points[j].y;
             let d = currentSide == 0 ? dist(x, y, mouseX, mouseY - offset) : dist(x, y, mouseX - offset, mouseY);
 
-            if (d < closest) {
+            if (d < closest && lines[i].side == currentSide) {
               closest = d;
               lineSelected = lines[i];
               pointSelected = lines[i].points[j];
