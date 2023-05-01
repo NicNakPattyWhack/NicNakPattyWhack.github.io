@@ -23,7 +23,7 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(windowHeight, windowWidth);
+  createCanvas(windowWidth, windowWidth);
   // if (windowWidth > windowHeight) {
   //   createCanvas(windowWidth, windowHeight);
   // }
