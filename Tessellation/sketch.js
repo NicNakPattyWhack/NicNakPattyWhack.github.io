@@ -187,23 +187,6 @@ function addToHistory() {
 function draw() {
   background(255);
 
-  push();
-  noStroke();
-  fill(0);
-  text(historyIndex, 20, 20);
-  let txt = "";
-  for (let i in actionHistory) { txt += i == historyIndex ? "•" : "·"; }
-  text(txt, 20, 40);
-  text(actionHistory[actionHistory.length - 1] == tessellation, 20, 60);
-  // text((actionHistory.length), 20, 40);
-  pop();
-
-  // noStroke();
-  // fill(0);
-  // text(mouseIsPressed, mouseX, mouseY - 20);
-
-  // pointSelected = null;
-  // lineSelected = null;
   // background(128 + 255 * noise(0, frameCount * 0.01), 128 + 255 * noise(10, frameCount * 0.01), 128 + 255 * noise(0, frameCount * 0.01));
 
   printScale = sliders[0].value;
@@ -478,22 +461,24 @@ function mousePressed() {
   let nearestDist = Infinity;
   for (let t of tessellation) {
     for (let l of t.lines) {
-      for (let j in l.points) {
-        let p = l.points[j];
-        for (let offset of [0, dim - 300]) {
-          let d;
-          if (currentSide == 0) d = dist(p.x, p.y, mouseX, mouseY - offset);
-          else if (currentSide == 1) d = dist(p.x, p.y, mouseX - offset, mouseY);
+      if (l.side == currentSide) {
+        for (let j in l.points) {
+          let p = l.points[j];
+          for (let offset of [0, dim - 300]) {
+            let d;
+            if (currentSide == 0) d = dist(p.x, p.y, mouseX, mouseY - offset);
+            else if (currentSide == 1) d = dist(p.x, p.y, mouseX - offset, mouseY);
 
-          if (d < nearestDist && d < 20) {
-            itemSelectedType = "line";
-            nearestLine = l;
-            nearestPoint = p;
-            nearestDist = d;
-            if (currentSide == 0) mouseOffset.set(0, -offset);
-            else if (currentSide == 1) mouseOffset.set(-offset, 0);
+            if (d < nearestDist && d < 20) {
+              itemSelectedType = "line";
+              nearestLine = l;
+              nearestPoint = p;
+              nearestDist = d;
+              if (currentSide == 0) mouseOffset.set(0, -offset);
+              else if (currentSide == 1) mouseOffset.set(-offset, 0);
 
-            break;
+              break;
+            }
           }
         }
       }
