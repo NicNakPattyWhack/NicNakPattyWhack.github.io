@@ -23,10 +23,10 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(400, 500);
+  // createCanvas(400, 500);
 
   // if (windowWidth > windowHeight) {
-  //   createCanvas(windowWidth, windowHeight);
+    createCanvas(windowWidth, windowHeight);
   // }
   // else if (windowWidth < windowHeight) {
   //   createCanvas(windowHeight, windowWidth);
@@ -502,7 +502,7 @@ function mouseReleased() {
   if (!upload) {
     for (let i in vertices) {
       let d = dist(pmouseX, pmouseY, vertices[i].x, vertices[i].y);
-      if (d < 10) {
+      if (d < 20) {
         currentSide = min(1, currentSide + 1);
       }
     }
